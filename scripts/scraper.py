@@ -35,8 +35,7 @@ def scrape_data(pages=1):
 
                 for item in listings:
                     try:
-                        # Full text content of the card
-                        full_text = item.get_text(" ", strip=True) 
+
                         
                         # 1. Title (H2 is usually reliable)
                         title_tag = item.find("h2")
@@ -68,14 +67,44 @@ def scrape_data(pages=1):
                         lb_match = re.search(r'LB\s*:\s*(\d+)', full_text, re.IGNORECASE)
                         if lb_match: lb = int(lb_match.group(1))
                         
-                        # KT/KM (Heuristic: "3 KT" or similar is rare on this site layout)
-                        # The layout often has just numbers next to icons.
-                        # But without icons, we might miss them.
-                        # Let's try to find numbers that are NOT LT/LB/Rp.
-                        # Since we can't reliably parse KT/KM without icon classes, we default them.
-                        # However, if we see "Kamar Tidur" in text (less likely on cards), use it.
-                        kt = 2 # Default
-                        km = 2 # Default
+                        # KT/KM (Regex Heuristic)
+                        # Pattern found: "LT: 76 m² LB: 375 m² 3 3"
+                        # We look for digits after LB and m2.
+                        
+                        # Find the substring after "LB"
+                        if "LB" in full_text:
+                            after_lb = full_text.split("LB")[1]
+                            # Find all numbers in the remainder
+                            specs_numbers = re.findall(r'\b(\d+)\b', after_lb)
+                            # specs_numbers[0] is LB value (already parsed)
+                            # specs_numbers[1] is likely KT
+                            # specs_numbers[2] is likely KM
+                            
+                            if len(specs_numbers) >= 2:
+                                # Skip the first one as it is the LB value
+                                # Note: Sometimes 'm2' is adjacent, so ensure we aren't picking up '2' from m2.
+                                # But re.findall(\b\d+\b) handles 'm2' as 'm' and '2'. 
+                                # Better: use specific regex for sequence
+                                pass
+
+                        # Robust regex for "LB: X m² Y Z"
+                        # matches "375 m² 3 4" or "375 m2 3 4"
+                        specs_match = re.search(r'LB\s*:\s*\d+\s*m[²2]?\s+(\d+)\s+(\d+)', full_text, re.IGNORECASE)
+                        if specs_match:
+                            kt = int(specs_match.group(1))
+                            km = int(specs_match.group(2))
+                        else:
+                            # Fallback: Try to find ANY two small integers (1-9) close to end of string if above fails
+                            # This is risky but better than default 2/1 if valid data exists
+                            loose_match = re.findall(r'\s(\d)\s+(\d)\s', full_text)
+                            if loose_match:
+                                kt = int(loose_match[0][0])
+                                km = int(loose_match[0][1])
+                        
+                        # Defaults
+                        if kt == 0: kt = 2
+                        if km == 0: km = 1
+                        
                         
                         if price > 0:
                             all_data.append({
