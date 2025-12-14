@@ -2,7 +2,9 @@ version: '3.8'
 
 services:
   house_price_api:
-    build: ./api
+    build:
+      context: .
+      dockerfile: api/Dockerfile
     container_name: house_price_api
     ports:
       - "5000:5000"
@@ -16,5 +18,5 @@ services:
     depends_on:
       - house_price_api
     environment:
-      - API_URL=http://house_price_api:5000/predict
+      - API_URL=http://house_price_api:5000
     restart: always

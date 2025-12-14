@@ -35,8 +35,9 @@ def scrape_data(pages=1):
 
                 for item in listings:
                     try:
+                        # Full text content of the card
+                        full_text = item.get_text(" ", strip=True) 
 
-                        
                         # 1. Title (H2 is usually reliable)
                         title_tag = item.find("h2")
                         nama_rumah = title_tag.get_text(strip=True) if title_tag else "N/A"
@@ -87,24 +88,55 @@ def scrape_data(pages=1):
                                 # Better: use specific regex for sequence
                                 pass
 
-                        # Robust regex for "LB: X m² Y Z"
-                        # matches "375 m² 3 4" or "375 m2 3 4"
-                        specs_match = re.search(r'LB\s*:\s*\d+\s*m[²2]?\s+(\d+)\s+(\d+)', full_text, re.IGNORECASE)
-                        if specs_match:
-                            kt = int(specs_match.group(1))
-                            km = int(specs_match.group(2))
-                        else:
-                            # Fallback: Try to find ANY two small integers (1-9) close to end of string if above fails
-                            # This is risky but better than default 2/1 if valid data exists
-                            loose_match = re.findall(r'\s(\d)\s+(\d)\s', full_text)
-                            if loose_match:
-                                kt = int(loose_match[0][0])
-                                km = int(loose_match[0][1])
+                        # Extraction Strategy 1: Look for specific SVG icons (Most Robust)
+                        kt, km, grs = 0, 0, 0
+                        
+                        # Helper to extract text from span next to specific icon
+                        def get_spec_by_icon(soup_item, icon_id):
+                            try:
+                                icon = soup_item.find("use", href=lambda x: x and icon_id in x)
+                                if not icon:
+                                    icon = soup_item.find("use", attrs={"xlink:href": lambda x: x and icon_id in x})
+                                if icon:
+                                    svg = icon.find_parent("svg")
+                                    if svg:
+                                        span = svg.find_parent("span")
+                                        if span:
+                                            txt = span.get_text(strip=True)
+                                            # Clean non-digit chars if any
+                                            clean_txt = re.sub(r'\D', '', txt)
+                                            if clean_txt:
+                                                return int(clean_txt)
+                            except:
+                                pass
+                            return 0
+
+                        kt = get_spec_by_icon(item, "#bedroom-icon")
+                        km = get_spec_by_icon(item, "#bathroom-icon")
+                        grs = get_spec_by_icon(item, "#carports-icon")
+
+                        # Extraction Strategy 2: Regex on text (Fallback)
+                        if kt == 0 or km == 0:
+                            # Robust regex for "LB: X m² KT KM GRS?"
+                            # matches "375 m² 3 3 1" or "375 m2 3 3"
+                            specs_match = re.search(r'LB\s*:\s*\d+\s*m[²2]?\s+(\d+)\s+(\d+)(?:\s+(\d+))?', full_text, re.IGNORECASE)
+                            if specs_match:
+                                if kt == 0: kt = int(specs_match.group(1))
+                                if km == 0: km = int(specs_match.group(2))
+                                # Only split-second guess GRS if not found by icon
+                                if grs == 0 and specs_match.group(3):
+                                    grs = int(specs_match.group(3))
+                            else:
+                                # Fallback: Try to find ANY two small integers (1-9) close to end of string if above fails
+                                loose_match = re.findall(r'\s(\d)\s+(\d)\s', full_text)
+                                if loose_match:
+                                    if kt == 0: kt = int(loose_match[0][0])
+                                    if km == 0: km = int(loose_match[0][1])
                         
                         # Defaults
                         if kt == 0: kt = 2
                         if km == 0: km = 1
-                        
+                        if grs == 0: grs = 1 # Default to 1 if genuinely not found (most houses have 1)
                         
                         if price > 0:
                             all_data.append({
@@ -114,7 +146,7 @@ def scrape_data(pages=1):
                                 "LT": lt if lt > 0 else 60,
                                 "KT": kt,
                                 "KM": km,
-                                "GRS": 1
+                                "GRS": grs
                             })
                             
                     except Exception as e:

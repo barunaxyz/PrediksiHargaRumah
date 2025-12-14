@@ -61,10 +61,25 @@ def train():
     print(f"MAE: {mae:,.2f}")
     print(f"R2 Score: {r2:.4f}")
     
-    # 6. Save
+    # 6. Save Model
     os.makedirs(os.path.dirname(MODEL_PATH), exist_ok=True)
     joblib.dump(model, MODEL_PATH)
     print(f"Model saved to {MODEL_PATH}")
+
+    # 7. Save Metrics
+    import json
+    import datetime
+    
+    metrics_path = os.path.join(ROOT_DIR, "api", "models", "metrics.json")
+    metrics_data = {
+        "mae": mae,
+        "r2": r2,
+        "last_updated": datetime.datetime.now().strftime("%d %B %Y %H:%M")
+    }
+    
+    with open(metrics_path, "w") as f:
+        json.dump(metrics_data, f)
+    print(f"Metrics saved to {metrics_path}")
 
 if __name__ == "__main__":
     train()
