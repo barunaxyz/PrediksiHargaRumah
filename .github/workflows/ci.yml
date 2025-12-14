@@ -24,4 +24,4 @@ jobs:
       run: docker build -t house-price-frontend ./frontend
 
     - name: Verify Docker Compose Configuration
-      run: docker-compose config
+      run: docker compose config
