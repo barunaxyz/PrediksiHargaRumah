@@ -99,17 +99,45 @@ def scrape_data(pages=1):
         except Exception as e:
             print(f"Request failed: {e}")
 
-    # Save Data
+    # ... Scrape logic ends ...
+
+    # Save Data (Append Mode)
     if all_data:
-        df = pd.DataFrame(all_data)
-        # Add 'NO' column
-        df.reset_index(inplace=True)
-        df.rename(columns={'index': 'NO'}, inplace=True)
-        df['NO'] = df['NO'] + 1
+        new_df = pd.DataFrame(all_data)
+        print(f"Scraped {len(new_df)} new records.")
         
+        if os.path.exists(OUTPUT_FILE):
+            print(f"Found existing dataset at {OUTPUT_FILE}. Appending...")
+            existing_df = pd.read_excel(OUTPUT_FILE)
+            
+            # Combine
+            combined_df = pd.concat([existing_df, new_df], ignore_index=True)
+            
+            # Remove Duplicates
+            # We assume if (NAMA, MRG) are same, it's same listing. 
+            # Or use all columns except NO/Index.
+            # Ideally duplicates are subset=['NAMA RUMAH', 'HARGA', 'LB', 'LT']
+            combined_df.drop_duplicates(subset=['NAMA RUMAH', 'LB', 'LT', 'KT', 'KM'], keep='last', inplace=True)
+            
+            # Re-index NO column
+            combined_df.reset_index(drop=True, inplace=True)
+            if 'NO' in combined_df.columns:
+                combined_df['NO'] = combined_df.index + 1
+            else:
+                combined_df.insert(0, 'NO', combined_df.index + 1)
+                
+            final_df = combined_df
+        else:
+            print("No existing dataset found. Creating new one.")
+            new_df.reset_index(inplace=True)
+            new_df.rename(columns={'index': 'NO'}, inplace=True)
+            new_df['NO'] = new_df['NO'] + 1
+            final_df = new_df
+        
+        # Save
         os.makedirs(os.path.dirname(OUTPUT_FILE), exist_ok=True)
-        df.to_excel(OUTPUT_FILE, index=False)
-        print(f"Successfully scraped {len(df)} records to {OUTPUT_FILE}")
+        final_df.to_excel(OUTPUT_FILE, index=False)
+        print(f"Successfully saved {len(final_df)} records to {OUTPUT_FILE}")
     else:
         print("No data scraped. Check selectors or anti-scraping blocking.")
 
