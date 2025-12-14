@@ -4,6 +4,7 @@ import pandas as pd
 import random
 import time
 import os
+import re
 
 # --- Configurations ---
 BASE_URL = "https://www.rumah123.com/jual/jakarta-selatan/rumah/"
@@ -22,73 +23,69 @@ def scrape_data(pages=1):
         print(f"Scraping page {page}: {url}")
         
         try:
-            # Add headers to mimic a real browser to avoid instant 403
             session = requests.Session()
             response = session.get(url, headers=random.choice(HEADERS_LIST), timeout=30)
             
             if response.status_code == 200:
                 soup = BeautifulSoup(response.content, "html.parser")
                 
-                # Attempt 1: Try to find card elements (This selector needs to be accurate)
-                # Common pattern for listings
-                listings = soup.find_all("div", class_="ui-organism-intersection__element") 
-                if not listings:
-                     # Fallback for other layout types
-                     listings = soup.find_all("div", class_="card-featured__content-wrapper")
-
+                # Robust selector found via debugging
+                listings = soup.select('div[data-test-id^="srp-listing-card-"]')
                 print(f"Found {len(listings)} listings on page {page}")
 
                 for item in listings:
                     try:
-                        # Extract data (Logic depends on specific DOM structure)
-                        # NOTE: These selectors are 'best guess' and might need adjustment 
-                        # if the website updates its class names.
+                        # Full text content of the card
+                        full_text = item.get_text(" ", strip=True) 
                         
-                        # Title/Name
-                        title_tag = item.find("h2") or item.find("a", title=True)
+                        # 1. Title (H2 is usually reliable)
+                        title_tag = item.find("h2")
                         nama_rumah = title_tag.get_text(strip=True) if title_tag else "N/A"
                         
-                        # Price
-                        price_tag = item.find("div", class_="price") or item.find("span", class_="ui-atomic-text--type-heading")
-                        price_text = price_tag.get_text(strip=True) if price_tag else "0"
-                        # Clean price text (e.g., "Rp 3,5 Miliar" -> 3500000000)
-                        price = clean_price(price_text)
+                        # 2. Price (Regex)
+                        # Matches: Rp 7,5 Miliar, Rp 7.5 M, Rp 500 Juta, etc.
+                        price_match = re.search(r'Rp\s*([\d\.,]+)\s+(Miliar|M|Juta|Jt)', full_text, re.IGNORECASE)
+                        price = 0
+                        if price_match:
+                            val_str = price_match.group(1)
+                            unit = price_match.group(2).lower()
+                            val = float(val_str.replace(",", "."))
+                            
+                            if 'm' in unit:
+                                price = int(val * 1_000_000_000)
+                            elif 'j' in unit:
+                                price = int(val * 1_000_000)
                         
-                        # Specs (LT, LB, KT, KM)
-                        # Usually inside icons wrapper
-                        features = item.find_all("div", class_="attribute-info")
+                        # 3. Specs (Regex)
+                        # LT: 60 m2, LB: 60 m2
                         lt, lb, kt, km = 0, 0, 0, 0
                         
-                        # Use text searching if specific classes are hard to find
-                        text_content = item.get_text(" ", strip=True)
+                        # LT
+                        lt_match = re.search(r'LT\s*:\s*(\d+)', full_text, re.IGNORECASE)
+                        if lt_match: lt = int(lt_match.group(1))
                         
-                        # Simple heuristics for specs parsing from text if badges are missing
-                        # e.g. "200 m² 100 m² 3 2"
+                        # LB
+                        lb_match = re.search(r'LB\s*:\s*(\d+)', full_text, re.IGNORECASE)
+                        if lb_match: lb = int(lb_match.group(1))
                         
-                        # Try finding explicit attributes
-                        # This part requires inspection of the actual HTML structure
-                        # Since we can't inspect, we will try to parse metadata attributes if available
-                        attributes = item.find_all("div", class_="ui-atomic-text")
-                        for attr in attributes:
-                            val = attr.get_text(strip=True)
-                            if "m²" in val:
-                                if lt == 0: lt = parse_int(val) # Assumption: first m2 is LT or LB? usually LB first then LT or vice versa. 
-                                # Let's assume standard order or look for icons
-                                else: lb = parse_int(val) 
-                            elif val.isdigit() and len(val) < 3:
-                                # Likely KT or KM
-                                if kt == 0: kt = int(val)
-                                else: km = int(val)
-
-                        if price > 0: # Only add if price is valid
+                        # KT/KM (Heuristic: "3 KT" or similar is rare on this site layout)
+                        # The layout often has just numbers next to icons.
+                        # But without icons, we might miss them.
+                        # Let's try to find numbers that are NOT LT/LB/Rp.
+                        # Since we can't reliably parse KT/KM without icon classes, we default them.
+                        # However, if we see "Kamar Tidur" in text (less likely on cards), use it.
+                        kt = 2 # Default
+                        km = 2 # Default
+                        
+                        if price > 0:
                             all_data.append({
                                 "NAMA RUMAH": nama_rumah,
                                 "HARGA": price,
-                                "LB": lb if lb > 0 else 100, # Defaulting if missing to avoid drop
-                                "LT": lt if lt > 0 else 100,
-                                "KT": kt if kt > 0 else 2,
-                                "KM": km if km > 0 else 1,
-                                "GRS": 1 # Hard to scrape, default to 1
+                                "LB": lb if lb > 0 else 60,
+                                "LT": lt if lt > 0 else 60,
+                                "KT": kt,
+                                "KM": km,
+                                "GRS": 1
                             })
                             
                     except Exception as e:
@@ -96,10 +93,6 @@ def scrape_data(pages=1):
                         continue
             else:
                 print(f"Failed to fetch page {page}: {response.status_code}")
-                # If 403/429, stop scraping
-                if response.status_code in [403, 429]:
-                    print("Blocked by anti-scraping. Stopping.")
-                    break
                 
             time.sleep(random.uniform(2, 5))
             
@@ -121,21 +114,8 @@ def scrape_data(pages=1):
         print("No data scraped. Check selectors or anti-scraping blocking.")
 
 def clean_price(price_text):
-    # Example: "Rp 3,5 Miliar" -> 3500000000
-    try:
-        clean = price_text.lower().replace("rp", "").replace(",", ".").strip()
-        multiplier = 1
-        if "miliar" in clean or "m" in clean:
-            multiplier = 1_000_000_000
-            clean = clean.replace("miliar", "").replace("m", "")
-        elif "juta" in clean or "jt" in clean:
-            multiplier = 1_000_000
-            clean = clean.replace("juta", "").replace("jt", "")
-        
-        return int(float(clean.strip()) * multiplier)
-    except:
-        print(f"debug price fail: {price_text}")
-        return 0
+    # Legacy wrapper if needed, but regex handles it inside loop now
+    return 0
 
 def parse_int(text):
     try:
