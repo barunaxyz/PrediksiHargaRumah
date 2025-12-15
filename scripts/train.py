@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
-from sklearn.metrics import mean_absolute_error, r2_score
+from sklearn.metrics import mean_absolute_percentage_error, r2_score
 import joblib
 import os
 import sys
@@ -54,11 +54,11 @@ def train():
     
     # 5. Evaluate
     y_pred = model.predict(X_test)
-    mae = mean_absolute_error(y_test, y_pred)
+    mape = mean_absolute_percentage_error(y_test, y_pred)
     r2 = r2_score(y_test, y_pred)
     
     print(f"Model Performance:")
-    print(f"MAE: {mae:,.2f}")
+    print(f"MAPE: {mape:.2%}")
     print(f"R2 Score: {r2:.4f}")
     
     # 6. Save Model
@@ -72,7 +72,7 @@ def train():
     
     metrics_path = os.path.join(ROOT_DIR, "api", "models", "metrics.json")
     metrics_data = {
-        "mae": mae,
+        "mape": mape,
         "r2": r2,
         "last_updated": datetime.datetime.now().strftime("%d %B %Y %H:%M")
     }

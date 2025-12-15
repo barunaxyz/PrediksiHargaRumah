@@ -81,7 +81,7 @@ with st.sidebar:
         with col_m1:
             st.metric("R2 Score", f"{metrics['r2']:.2f}")
         with col_m2:
-            st.metric("MAE (Error)", f"{int(metrics['mae']/1e6)} Jt")
+            st.metric("MAPE (Error Rate)", f"{metrics['mape']:.1%}")
         
         st.markdown(f"**Last Updated:**  \n{metrics['last_updated']}")
         st.success("Model Status: **Active**")
