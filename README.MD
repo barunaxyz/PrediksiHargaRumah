@@ -1,12 +1,5 @@
 # 🏠 Prediksi Harga Rumah Jakarta Selatan
 
-Aplikasi Machine Learning untuk memprediksi harga rumah di Jakarta Selatan berdasarkan spesifikasi seperti Luas Tanah, Luas Bangunan, Jumlah Kamar, dll.
-
-![Tech Stack](https://img.shields.io/badge/Python-3.9-blue)
-![Tech Stack](https://img.shields.io/badge/Flask-API-green)
-![Tech Stack](https://img.shields.io/badge/Streamlit-Frontend-red)
-![Tech Stack](https://img.shields.io/badge/Docker-Ready-blue)
-
 ## 🚀 Quick Start (Recommended)
 
 Cara termudah untuk menjalankan aplikasi adalah menggunakan **Docker**.
