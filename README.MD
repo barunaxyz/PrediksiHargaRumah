@@ -1,6 +1,6 @@
 # 🏠 Prediksi Harga Rumah Jakarta Selatan
 
-## 🚀 Quick Start (Recommended)
+## Mulai Ngab
 
 Cara termudah untuk menjalankan aplikasi adalah menggunakan **Docker**.
 
