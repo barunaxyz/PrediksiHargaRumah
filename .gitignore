@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+.env
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# VS Code
+.vscode/
+
+# Project Specific
+data/raw/*.xlsx
+!data/raw/DATA RUMAH.xlsx
+# Keep the main raw file but ignore temp/others if needed, actually user wants to keep the main file.
+# Ignoring the temp file explicitly just in case
+~$*.xlsx

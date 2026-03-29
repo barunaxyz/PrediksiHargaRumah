@@ -3,22 +3,39 @@ name: Weekly Model Retraining
 on:
   schedule:
     - cron: '0 0 * * 0' # Every Sunday at midnight UTC
+<<<<<<< HEAD
   workflow_dispatch: # Allow manual trigger
+=======
+  workflow_dispatch:      # Allow manual trigger
+
+permissions:
+  contents: write
+>>>>>>> 653d325a1121d19e04b8fc18eeb527eab1d25cd0
 
 jobs:
   retrain:
     runs-on: ubuntu-latest
+<<<<<<< HEAD
     permissions:
       contents: write
 
     steps:
     - uses: actions/checkout@v3
+=======
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+>>>>>>> 653d325a1121d19e04b8fc18eeb527eab1d25cd0
 
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.9'
 
+<<<<<<< HEAD
     - name: Install dependencies
       run: |
         pip install -r scripts/requirements.txt
@@ -41,4 +58,22 @@ jobs:
         git config --global user.email "actions@github.com"
         git add data/raw/"DATA RUMAH.xlsx" data/processed/*.pkl api/models/production_model.pkl api/models/metrics.json
         git commit -m "Auto-update model and metrics [skip ci]" || echo "No changes to commit"
+=======
+    - name: Install Dependencies
+      run: |
+        pip install -r scripts/requirements.txt
+
+    - name: Run Scraper
+      run: python scripts/scraper.py
+
+    - name: Run Training
+      run: python scripts/train.py
+
+    - name: Commit and Push Changes
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git add data/raw/ "api/models/production_model.pkl" "api/models/metrics.json"
+        git commit -m "Auto-update model and dataset [skip ci]" || echo "No changes to commit"
+>>>>>>> 653d325a1121d19e04b8fc18eeb527eab1d25cd0
         git push

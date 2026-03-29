@@ -11,11 +11,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+<<<<<<< HEAD
     - uses: actions/checkout@v3
+=======
+    - name: Checkout code
+      uses: actions/checkout@v3
+>>>>>>> 653d325a1121d19e04b8fc18eeb527eab1d25cd0
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v2
 
+<<<<<<< HEAD
     - name: Validate Docker Compose
       run: docker compose config
 
@@ -24,3 +30,13 @@ jobs:
 
     - name: Build Frontend Image
       run: docker build -t house-price-frontend ./frontend
+=======
+    - name: Build API Image
+      run: docker build -f api/Dockerfile -t house-price-api .
+
+    - name: Build Frontend Image
+      run: docker build -t house-price-frontend ./frontend
+
+    - name: Verify Docker Compose Configuration
+      run: docker compose config
+>>>>>>> 653d325a1121d19e04b8fc18eeb527eab1d25cd0
