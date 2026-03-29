@@ -4,7 +4,7 @@ import util as utils
 import joblib
 import os
 import json
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from collections import deque
 import numpy as np
 
@@ -24,7 +24,7 @@ prediction_logs = deque(maxlen=MAX_LOG_SIZE)
 def log_prediction(input_data, prediction, status="success", error_msg=None, model_used="Unknown", details=None):
     """Log each prediction request"""
     log_entry = {
-        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "timestamp": datetime.now(timezone(timedelta(hours=7))).strftime("%Y-%m-%d %H:%M:%S"),
         "input": input_data,
         "prediction": prediction,
         "status": status,
@@ -459,7 +459,7 @@ def predict():
              else:
                  print(f"Choosing Model 1 (R2: {model1_r2:.4f}) over Model 2 (R2: {model2_r2:.4f})")
         elif model2 and not model1:
-             use_model2 = True
+              use_model2 = True
              print("Model 1 missing, using Model 2")
              
         if use_model2:
