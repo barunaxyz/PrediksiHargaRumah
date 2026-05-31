@@ -1,5 +1,4 @@
 import pandas as pd
-import os
 
 # Load data
 file_path = r"c:\Users\barun\Prediksi-Harga-Rumah\data\raw\DATA RUMAH.xlsx"

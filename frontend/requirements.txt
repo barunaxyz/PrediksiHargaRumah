@@ -1,12 +1,6 @@
-<<<<<<< HEAD
 streamlit
 requests
 pillow
 plotly
 pandas
 evidently
-=======
-streamlit
-requests
-pillow
->>>>>>> 653d325a1121d19e04b8fc18eeb527eab1d25cd0

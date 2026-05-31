@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 flask
 pandas
 numpy
@@ -7,12 +6,3 @@ scikit-learn
 joblib
 openpyxl
 evidently==0.4.33
-=======
-flask
-pandas
-numpy
-pyyaml
-scikit-learn
-joblib
-openpyxl
->>>>>>> 653d325a1121d19e04b8fc18eeb527eab1d25cd0
