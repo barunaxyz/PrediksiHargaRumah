@@ -27,4 +27,6 @@ services:
       - house_price_api
     environment:
       - API_URL=http://house_price_api:5000
+      - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
     restart: always
