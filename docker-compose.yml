@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   house_price_api:
@@ -15,7 +15,9 @@ services:
     restart: always
 
   house_price_frontend:
-    build: ./frontend
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
     container_name: house_price_frontend
     volumes:
       - ./frontend:/app
